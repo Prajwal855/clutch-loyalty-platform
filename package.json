@@ -1,0 +1,63 @@
+{
+  "name": "clutch-loyalty-platform",
+  "version": "1.0.0",
+  "description": "Loyalty Platform",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "setup": "npm install && cd frontend && npm install && cd ../backend && bundle install",
+    "dev": "concurrently -n \"RAILS,REACT\" -c \"red,blue\" \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && bundle exec rails server -p 3001",
+    "frontend": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "build:all": "npm run build && cd backend && bundle exec rails assets:precompile",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:backend": "cd backend && bundle exec rspec",
+    "test:frontend": "cd frontend && npm test",
+    "db:setup": "cd backend && rails db:create db:migrate db:seed",
+    "db:reset": "cd backend && rails db:drop db:create db:migrate db:seed",
+    "db:migrate": "cd backend && rails db:migrate",
+    "install:all": "npm run setup",
+    "clean": "rm -rf node_modules frontend/node_modules frontend/build backend/tmp backend/log/*.log",
+    "heroku-postbuild": "cd frontend && npm install && npm run build",
+    "start": "npm run dev",
+    "lint": "cd frontend && npm run lint",
+    "format": "cd frontend && npm run format",
+    "rails:console": "cd backend && rails console",
+    "rails:routes": "cd backend && rails routes"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0",
+    "ruby": ">=3.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prajwal855/clutch-loyalty-platform.git"
+  },
+  "keywords": [
+    "hedera",
+    "loyalty",
+    "ruby-on-rails",
+    "react",
+    "typescript"
+  ],
+  "author": "Riterno <prajwal.mysore0077@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Prajwal855/clutch-loyalty-platform/issues"
+  },
+  "homepage": "https://github.com/Prajwal855/clutch-loyalty-platform#readme",
+  "config": {
+    "ports": {
+      "backend": 3001,
+      "frontend": 3000
+    }
+  }
+}
