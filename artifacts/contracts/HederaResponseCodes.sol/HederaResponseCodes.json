@@ -1,0 +1,63 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "HederaResponseCodes",
+  "sourceName": "contracts/HederaResponseCodes.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "INSUFFICIENT_TOKEN_BALANCE",
+      "outputs": [
+        {
+          "internalType": "int32",
+          "name": "",
+          "type": "int32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "INVALID_TOKEN_ID",
+      "outputs": [
+        {
+          "internalType": "int32",
+          "name": "",
+          "type": "int32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SUCCESS",
+      "outputs": [
+        {
+          "internalType": "int32",
+          "name": "",
+          "type": "int32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TOKEN_NOT_ASSOCIATED_TO_ACCOUNT",
+      "outputs": [
+        {
+          "internalType": "int32",
+          "name": "",
+          "type": "int32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60bf610039600b82828239805160001a60731461002c57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe730000000000000000000000000000000000000000301460806040526004361060515760003560e01c80637829c5da146056578063aa2bf7d3146074578063b49aa3b514607b578063d0a6d1a6146082575b600080fd5b605d601881565b60405160039190910b815260200160405180910390f35b605d601981565b605d601781565b605d60168156fea2646970667358221220274f9878457bda1b8a3d358f6b8a82d4a58dbc00364c47b87d5841ad6b46a29464736f6c63430008070033",
+  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040526004361060515760003560e01c80637829c5da146056578063aa2bf7d3146074578063b49aa3b514607b578063d0a6d1a6146082575b600080fd5b605d601881565b60405160039190910b815260200160405180910390f35b605d601981565b605d601781565b605d60168156fea2646970667358221220274f9878457bda1b8a3d358f6b8a82d4a58dbc00364c47b87d5841ad6b46a29464736f6c63430008070033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

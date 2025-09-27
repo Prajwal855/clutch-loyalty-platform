@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,8 +7,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
-  GridProps,
   CircularProgress,
   createTheme,
   ThemeProvider,
@@ -64,89 +62,17 @@ interface Transaction {
 const theme = createTheme({
   palette: {
     mode: 'dark',
-    primary: {
-      main: '#B0B0B0',
-    },
+    primary: { main: '#B0B0B0' },
     background: {
       default: '#0A0A0A',
       paper: 'rgba(28, 28, 28, 0.85)',
     },
-    text: {
-      primary: '#FFFFFF',
-      secondary: '#B0B0B0',
-    },
+    text: { primary: '#FFFFFF', secondary: '#B0B0B0' },
   },
   typography: {
     fontFamily: '"Inter", sans-serif',
-    h4: {
-      fontWeight: 700,
-      letterSpacing: '0.05em',
-    },
-    body2: {
-      fontWeight: 400,
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: '12px',
-          background: 'linear-gradient(45deg, #808080, #B0B0B0)',
-          textTransform: 'none',
-          fontWeight: 600,
-          padding: '12px 24px',
-          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
-          '&:hover': {
-            background: 'linear-gradient(45deg, #A0A0A0, #C0C0C0)',
-            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4)',
-          },
-          '&:disabled': {
-            background: 'rgba(255, 255, 255, 0.1)',
-            color: 'rgba(255, 255, 255, 0.3)',
-          },
-          '&.MuiButton-outlined': {
-            background: 'transparent',
-            borderColor: '#B0B0B0',
-            color: '#B0B0B0',
-            '&:hover': {
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderColor: '#FFFFFF',
-            },
-          },
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: '16px',
-          background: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(15px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-        },
-      },
-    },
-    MuiTable: {
-      styleOverrides: {
-        root: {
-          background: 'transparent',
-        },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          color: '#B0B0B0',
-          padding: '12px',
-        },
-        head: {
-          color: '#FFFFFF',
-          fontWeight: 600,
-        },
-      },
-    },
+    h4: { fontWeight: 700, letterSpacing: '0.05em' },
+    body2: { fontWeight: 400 },
   },
 });
 
@@ -155,22 +81,23 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [payLoading, setPayLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-    const fetchDashboardData = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await axios.get('/dashboard', {
         headers: {
-          'Authorization': `Bearer ${sessionStorage.getItem('authToken')}`,
+          Authorization: `Bearer ${sessionStorage.getItem('authToken')}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+          Accept: 'application/json',
+        },
       });
 
       if (response.data.success) {
@@ -181,12 +108,38 @@ export default function Dashboard() {
     } catch (err: any) {
       console.error('Dashboard fetch error:', err);
       setError(err.response?.data?.error || 'Failed to fetch dashboard data');
-
-      if (err.response?.status === 401) {
-        logout();
-      }
+      if (err.response?.status === 401) logout();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBuyPoints = async () => {
+    try {
+      setPayLoading(true);
+      const response = await axios.post(
+        `/payments/create_payment`,
+        { amount: 10 },
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('authToken')}`,
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        // 🚀 Redirects user to PayPal standard checkout
+        window.location.href = response.data.approval_url;
+      } else {
+        alert('Failed to create PayPal order: ' + response.data.error);
+      }
+    } catch (err) {
+      console.error('PayPal create order error:', err);
+      alert('Something went wrong creating the PayPal order.');
+    } finally {
+      setPayLoading(false);
     }
   };
 
@@ -254,180 +207,31 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 4,
+              }}
+            >
               <Typography variant="h4" sx={{ color: 'text.primary' }}>
                 Welcome, {dashboardData.user.first_name}! 👋
               </Typography>
-              <Button variant="contained" onClick={logout}>
-                Logout
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleBuyPoints}
+                  disabled={payLoading}
+                >
+                  {payLoading ? 'Redirecting...' : 'Buy 10 Points ($10)'}
+                </Button>
+                <Button variant="outlined" onClick={logout}>
+                  Logout
+                </Button>
+              </Box>
             </Box>
-          </motion.div>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-            <Box sx={{ flex: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>
-                      Current Balance
-                    </Typography>
-                    <Typography sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'text.primary' }}>
-                      {(dashboardData.stats.current_balance / 100).toFixed(2)} LP
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Loyalty Points
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Box>
-            <Box sx={{ flex: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>
-                      Total Earned
-                    </Typography>
-                    <Typography sx={{ fontSize: '2rem', fontWeight: 'bold', color: '#22c55e' }}>
-                      +{(dashboardData.stats.total_earned / 100).toFixed(2)}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      All Time
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Box>
-            <Box sx={{ flex: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>
-                      Total Spent
-                    </Typography>
-                    <Typography sx={{ fontSize: '2rem', fontWeight: 'bold', color: '#ef4444' }}>
-                      -{(dashboardData.stats.total_spent / 100).toFixed(2)}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      All Time
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Box>
-            <Box sx={{ flex: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' } }}>
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>
-                      Transactions
-                    </Typography>
-                    <Typography sx={{ fontSize: '2rem', fontWeight: 'bold', color: 'text.primary' }}>
-                      {dashboardData.stats.total_transactions}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Total Count
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-            <Box sx={{ flex: { xs: '100%', md: 'calc(50% - 12px)' } }}>
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: 'text.primary', mb: 2 }}>
-                      Profile Info
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        <strong>Email:</strong> {dashboardData.user.email}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        <strong>Name:</strong> {dashboardData.user.first_name} {dashboardData.user.last_name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        <strong>Status:</strong>
-                        <span
-                          style={{
-                            color:  '#22c55e',
-                            marginLeft: '0.5rem',
-                          }}
-                        >
-                          {dashboardData.user.status}
-                        </span>
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        <strong>Member Since:</strong> {new Date(dashboardData.user.created_at).toLocaleDateString()}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Box>
-            <Box sx={{ flex: { xs: '100%', md: 'calc(50% - 12px)' } }}>
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: 'text.primary', mb: 2 }}>
-                      Hedera Wallet
-                    </Typography>
-                    {dashboardData.wallet ? (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          <strong>Account ID:</strong> {dashboardData.wallet.hedera_account_id}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          <strong>Token ID:</strong> {dashboardData.wallet.token_id}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          <strong>Balance:</strong> {dashboardData.wallet.formatted_balance} LP
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          <strong>Status:</strong>
-                          <span style={{ color: '#22c55e', marginLeft: '0.5rem' }}>
-                            ✅ Connected
-                          </span>
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          <strong>Connected:</strong> {new Date(dashboardData.wallet.connected_at).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <Typography variant="body2" sx={{ color: '#ef4444' }}>
-                        ❌ No wallet connected
-                      </Typography>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Box>
+            </motion.div>
           </Box>
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
@@ -486,7 +290,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </motion.div>
-        </Box>
       </Box>
     </ThemeProvider>
   );
