@@ -17,6 +17,8 @@ Rails.application.routes.draw do
   end
 
   post 'wallet_connect', to: 'wallet_connects#connect_wallet'
+  get 'dashboard', to: 'dashboard#index'
+  get 'dashboard/transactions', to: 'dashboard#transactions'
 
 
 

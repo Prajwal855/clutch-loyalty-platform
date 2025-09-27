@@ -33,19 +33,23 @@ class User < ApplicationRecord
   end
 
   def primary_loyalty_account
-    loyalty_accounts.find_by(account_type: :primary)
+    loyalty_accounts.last
   end
 
-   def verify_otp(entered_otp)
-      return false if otp_code.blank? || otp_sent_at.blank?
-  
-      if otp_code == entered_otp && otp_sent_at > 15.minutes.ago
-        self.status = "verified"
-        self.otp_code = nil
-        save
-        true
-      else
-        false
-      end
-   end
+  def total_loyalty_balance
+    loyalty_accounts.sum(:balance)
+  end
+
+  def verify_otp(entered_otp)
+    return false if otp_code.blank? || otp_sent_at.blank?
+
+    if otp_code == entered_otp && otp_sent_at > 15.minutes.ago
+      self.status = "verified"
+      self.otp_code = nil
+      save
+      true
+    else
+      false
+    end
+  end
 end

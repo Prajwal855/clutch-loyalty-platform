@@ -4,7 +4,9 @@ class BaseController < ApplicationController
     return render json: { error: 'Unauthorized' }, status: :unauthorized unless token
 
     begin
+        Rails.logger.info("check #{token}")
         payload = JWT.decode(token, Devise::JWT.config.secret).first
+        Rails.logger.info("check #{payload}")
         jti = payload['jti']
         return render json: { error: 'Invalid token payload' }, status: :unauthorized unless jti
 

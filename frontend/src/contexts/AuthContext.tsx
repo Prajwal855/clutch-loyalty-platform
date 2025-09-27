@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setLoading(true);
     const res = await axios.post('/login', { email, password });
-    if (res.data.success) {
+    if (res.data) {
       sessionStorage.setItem('authToken', res.data.token);
       setToken(res.data.token);
       setUser(res.data.user);
@@ -123,10 +123,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    sessionStorage.removeItem('authToken');
-    delete axios.defaults.headers.common['Authorization'];
-    setUser(null);
-    setToken(null);
+    // sessionStorage.removeItem('authToken');
+    // delete axios.defaults.headers.common['Authorization'];
+    // setUser(null);
+    // setToken(null);
   };
 
   return (
