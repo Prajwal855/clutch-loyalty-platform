@@ -4,6 +4,7 @@ import  SignupPage  from "./components/auth/SignupPage";
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from "./components/auth/LoginPage";
 import Dashboard from "./components/feat/DashboardPage";
+import PayPalCapture from "./components/feat/PayPalPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -27,6 +28,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route path="/paypal-capture" element={<PayPalCapture />} />
     </Routes>
   );
 }

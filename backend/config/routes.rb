@@ -20,6 +20,11 @@ Rails.application.routes.draw do
   get 'dashboard', to: 'dashboard#index'
   get 'dashboard/transactions', to: 'dashboard#transactions'
 
+  post 'payment/create_order', to: 'payments#create_order'
+
+  get '/payments/success', to: 'payments#success'
+  get '/payments/cancel', to: 'payments#cancel'
+
 
 
 
