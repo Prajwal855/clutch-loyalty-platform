@@ -16,6 +16,7 @@
     "@types/react": "^19.1.14",
     "@types/react-dom": "^19.1.9",
     "@walletconnect/modal": "^2.7.0",
+    "hashconnect": "^3.0.13",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-scripts": "5.0.1",
