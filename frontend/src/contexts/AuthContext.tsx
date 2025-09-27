@@ -123,10 +123,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    // sessionStorage.removeItem('authToken');
-    // delete axios.defaults.headers.common['Authorization'];
-    // setUser(null);
-    // setToken(null);
+    sessionStorage.removeItem('authToken');
+    delete axios.defaults.headers.common['Authorization'];
+    setUser(null);
+    setToken(null);
   };
 
   return (
