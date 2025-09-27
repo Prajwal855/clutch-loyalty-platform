@@ -1,4 +1,26 @@
 Rails.application.routes.draw do
+  devise_for :users,
+             path: '',
+             path_names: {
+               sign_in: 'login',
+               sign_out: 'logout',
+               registration: 'signup'
+             },
+             controllers: {
+               registrations: 'users/registrations',
+               sessions: 'users/sessions'
+             }
+
+  devise_scope :user do
+    post 'signup/verify_otp', to: 'users/registrations#verify_otp'
+    post 'signup/resend_otp', to: 'users/registrations#resend_otp'
+  end
+
+  post 'wallet_connect', to: 'wallet_connects#connect_wallet'
+
+
+
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
