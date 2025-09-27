@@ -1,4 +1,4 @@
-import  { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface User {
@@ -49,17 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token]);
 
-  async function loadUser() {
-    try {
-      const res = await axios.get('/auth/profile');
-      setUser(res.data.user);
-    } catch {
-      setUser(null);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const login = async (email: string, password: string) => {
     setLoading(true);

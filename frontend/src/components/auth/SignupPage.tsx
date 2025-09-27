@@ -275,7 +275,7 @@ export default function Signup() {
         dAppConnRef.current.walletConnectClient.off('session_delete', handleSessionDelete);
       }
     };
-  }, [connectWallet, email, password, navigate]);
+  }, [connectWallet, email, password, navigate, login]);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
