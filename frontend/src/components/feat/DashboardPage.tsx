@@ -43,6 +43,7 @@ import {
   AccountBalanceQuery,
   TransactionId,
   LedgerId,
+  Transaction
 } from '@hashgraph/sdk';
 
 // Define SignTransactionParams interface based on error and API expectations
@@ -81,15 +82,15 @@ interface DashboardData {
   };
 }
 
-interface Transaction {
-  id: number;
-  transaction_type: string;
-  amount: number;
-  balance_after: number;
-  reference: string;
-  status: string;
-  created_at: string;
-}
+// interface Transaction {
+//   id: number;
+//   transaction_type: string;
+//   amount: number;
+//   balance_after: number;
+//   reference: string;
+//   status: string;
+//   created_at: string;
+// }
 
 interface HederaTransaction {
   id: string;
@@ -319,131 +320,98 @@ export default function Dashboard() {
     [dashboardData, pairedAccountId]
   );
 
-  const handleHbarTransfer = async () => {
-    if (!pairedAccountId || !dAppConnRef.current || !sessionTopic) {
-      setPaymentMessage({ type: 'error', message: 'Please connect to HashPack wallet' });
-      return;
+const handleHbarTransfer = async () => {
+  if (!pairedAccountId || !dAppConnRef.current || !sessionTopic) {
+    setPaymentMessage({ type: 'error', message: 'Please connect to HashPack wallet' });
+    return;
+  }
+  if (!transferAmount || isNaN(Number(transferAmount))) {
+    setPaymentMessage({ type: 'error', message: 'Valid transfer amount is required' });
+    return;
+  }
+  if (!receiverAccountId.trim()) {
+    setPaymentMessage({ type: 'error', message: 'Receiver account ID is required' });
+    return;
+  }
+
+  try {
+    setHederaLoading(true);
+    setPaymentMessage(null);
+
+    // Parse and verify accounts
+    const senderAccountId = AccountId.fromString(pairedAccountId);
+    const receiverAccount = AccountId.fromString(receiverAccountId.trim());
+    await new AccountBalanceQuery().setAccountId(senderAccountId).execute(userClient);
+    await new AccountBalanceQuery().setAccountId(receiverAccount).execute(userClient);
+
+    // Build & freeze transaction
+    const amount = parseFloat(transferAmount);
+    const txId = TransactionId.generate(senderAccountId);
+    const transferTx = new TransferTransaction()
+      .setTransactionId(txId)
+      .addHbarTransfer(senderAccountId, Hbar.from(-amount, HbarUnit.Hbar))
+      .addHbarTransfer(receiverAccount, Hbar.from(amount, HbarUnit.Hbar))
+      .setNodeAccountIds([
+        AccountId.fromString('0.0.3'),
+        AccountId.fromString('0.0.4'),
+        AccountId.fromString('0.0.5'),
+      ])
+      .freezeWith(userClient);
+
+    // Serialize and Base64-encode
+    const bytes = transferTx.toBytes();
+    const b64 = btoa(String.fromCharCode(...Array.from(bytes)));
+
+    // Use the public signAndExecuteTransaction API
+    // Note: parameter name is `transactionList`
+    const result: any = await dAppConnRef.current.signAndExecuteTransaction({
+      signerAccountId: `hedera:testnet:${pairedAccountId}`,
+      transactionList: b64,
+    });
+
+    const txIdStr: string = result.transactionId;
+    const txHash: string = result.transactionHash;
+    if (!txIdStr) {
+      throw new Error('HashPack did not return a transaction ID');
     }
-    if (!transferAmount || isNaN(Number(transferAmount))) {
-      setPaymentMessage({ type: 'error', message: 'Valid transfer amount is required' });
-      return;
-    }
-    if (!receiverAccountId || receiverAccountId.trim().length === 0) {
-      setPaymentMessage({ type: 'error', message: 'Receiver account ID is required' });
-      return;
-    }
 
-    try {
-      setHederaLoading(true);
-      setPaymentMessage(null);
+    // Award rewards if any
+ const rewardAmount = Math.floor((amount * 1) / 100);
+if (rewardAmount > 0) {
+  await awardRewardTokens(senderAccountId, rewardAmount);
+}
 
-      // Validate account IDs
-      let senderAccountId: AccountId;
-      let receiverAccount: AccountId;
-      try {
-        senderAccountId = AccountId.fromString(pairedAccountId);
-        receiverAccount = AccountId.fromString(receiverAccountId.trim());
-      } catch (error) {
-        throw new Error('Invalid account ID format');
-      }
+    // Update state
+    setHederaTransactions(prev => [
+      {
+        id: txIdStr,
+        type: 'HBAR_TRANSFER',
+        amount,
+        status: 'SUCCESS',
+        hash: txHash,
+        timestamp: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
 
-      // Check balance
-      const balance = await new AccountBalanceQuery()
-        .setAccountId(senderAccountId)
-        .execute(userClient);
-      const amount = parseFloat(transferAmount);
-      const transferAmountHbar = Hbar.from(amount, HbarUnit.Hbar);
-      const feeBuffer = Hbar.from(0.1, HbarUnit.Hbar);
-      const totalRequiredBigNumber = transferAmountHbar.to(HbarUnit.Hbar).plus(feeBuffer.to(HbarUnit.Hbar));
-
-      if (balance.hbars.to(HbarUnit.Hbar).lt(totalRequiredBigNumber)) {
-        throw new Error('Insufficient HBAR balance for transfer (including fees)');
-      }
-
-      // Log transaction details for debugging
-      console.log('Transaction Details:', {
-        senderAccountId: senderAccountId.toString(),
-        receiverAccountId: receiverAccount.toString(),
-        amount: amount,
-        balance: balance.hbars.toString(),
-      });
-
-      // Verify receiver account exists
-      try {
-        await new AccountBalanceQuery()
-          .setAccountId(receiverAccount)
-          .execute(userClient);
-      } catch (error) {
-        throw new Error('Receiver account does not exist or is invalid');
-      }
-
-      // Create transaction
-      const transactionId = TransactionId.generate(senderAccountId);
-      console.log('Generated Transaction ID:', transactionId.toString());
-      const transferTx = new TransferTransaction()
-        .setTransactionId(transactionId)
-        .addHbarTransfer(senderAccountId, Hbar.from(amount * -1, HbarUnit.Hbar))
-        .addHbarTransfer(receiverAccount, Hbar.from(amount, HbarUnit.Hbar))
-        .freezeWith(userClient);
-
-      // Sign with WalletConnect
-      const txBytes = transferTx.toBytes();
-      const signParams: SignTransactionParams = {
-        signerAccountId: `hedera:${HederaChainId.Testnet}:${pairedAccountId}`,
-        transactionBody: txBytes,
-      };
-      const signedTxBytes: any = await dAppConnRef.current.signTransaction(signParams);
-      if (!signedTxBytes) {
-        throw new Error('Failed to sign transaction with HashPack');
-      }
-
-      
-
-      // Log signed transaction bytes for debugging
-      console.log('Signed Transaction Bytes:', Buffer.from(signedTxBytes).toString('hex'));
+    setPaymentMessage({
+      type: 'success',
+      message: `Transferred ${amount} HBAR${rewardAmount ? ` and earned ${rewardAmount} tokens!` : ''}`,
+    });
+    setTransferDialogOpen(false);
+    setTransferAmount('');
+    setReceiverAccountId('');
+    await fetchHederaBalance();
+  } catch (err: any) {
+    console.error('Transfer error:', err);
+    setPaymentMessage({ type: 'error', message: `Transfer failed: ${err.message}` });
+  } finally {
+    setHederaLoading(false);
+  }
+};
 
 
-      // Execute the signed transaction
-      const signedTx = TransferTransaction.fromBytes(signedTxBytes);
-      const txResponse = await signedTx.execute(userClient);
-      const receipt = await txResponse.getReceipt(userClient);
 
-      if (receipt.status.toString() === 'SUCCESS') {
-        const rewardAmount = Math.floor(amount / 100) * 2;
-        if (rewardAmount > 0) await awardRewardTokens(senderAccountId, rewardAmount);
-
-        setHederaTransactions(prev => [
-          {
-            id: txResponse.transactionId.toString(),
-            type: 'HBAR_TRANSFER',
-            amount,
-            status: 'SUCCESS',
-            hash: txResponse.transactionHash.toString(),
-            timestamp: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
-
-        setPaymentMessage({
-          type: 'success',
-          message: `Transferred ${amount} HBAR${rewardAmount > 0 ? ` and earned ${rewardAmount} tokens!` : ''}`,
-        });
-        setTransferDialogOpen(false);
-        setTransferAmount('');
-        setReceiverAccountId('');
-        await fetchHederaBalance();
-      }
-    } catch (error: any) {
-      console.error('Transfer error:', {
-        message: error.message,
-        status: error.status?.toString(),
-        transactionId: error.transactionId?.toString(),
-      });
-      setPaymentMessage({ type: 'error', message: `Transfer failed: ${error.message}` });
-    } finally {
-      setHederaLoading(false);
-    }
-  };
 
   const awardRewardTokens = async (userAccountId: AccountId, amount: number) => {
     try {
@@ -664,9 +632,6 @@ export default function Dashboard() {
             </Button>
           </DialogActions>
         </Dialog>
-
-        {/* NFT Creation Dialog */}
-        {/* Your existing NFT creation dialog code here */}
       </Box>
     </ThemeProvider>
   );

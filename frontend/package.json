@@ -7,6 +7,8 @@
     "@emotion/styled": "^11.14.1",
     "@gsap/react": "^2.1.2",
     "@hashgraph/proto": "^2.23.0",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",

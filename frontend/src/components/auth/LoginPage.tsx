@@ -166,6 +166,12 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
+          <Typography variant="h2" sx={{ mb: 4, color: 'text.primary', textAlign: 'center' }}>
+            Clutch
+          </Typography>
+          <Typography variant="h5" sx={{ mb: 4, color: 'grey', textAlign: 'center' }}>
+            Web3 Loyalty Platform
+          </Typography>
           <Typography variant="h4" sx={{ mb: 4, color: 'text.primary', textAlign: 'center' }}>
             Log In to Your Account
           </Typography>
